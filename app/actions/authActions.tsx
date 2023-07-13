@@ -16,6 +16,30 @@ interface Props {
 
 const BASE_URL = process.env.NEXTAUTH_URL as string;
 
+export async function resetPasswordWithCredentials(
+  token: string,
+  password: string
+) {
+  try {
+    const res: any = verifyToken(token) as string;
+    const newPassword = await bcrypt.hash(password, 12);
+    console.log({ id: res.userId, newPassword });
+    await prisma.user.update({
+      where: { id: res.userId },
+      data: {
+        password: newPassword,
+      },
+    });
+
+    return { message: "Your password has been reset!" };
+  } catch (error) {
+    let message = "";
+    if (error instanceof Error) message = error.message;
+    else message = String(error);
+    redirect(`/errors?error=${message}`);
+  }
+}
+
 export async function forgotPasswordWithCredentials(email: string) {
   try {
     const user = await prisma.user.findUnique({
